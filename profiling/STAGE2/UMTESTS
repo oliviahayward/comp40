@@ -1,0 +1,9 @@
+input.um
+mult.um
+div.um
+nand.um
+seg.um
+cond-mov.um
+cond_mov2.um
+segment.um
+loadp.um
