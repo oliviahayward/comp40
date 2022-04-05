@@ -1,0 +1,101 @@
+/******************************************************************************
+*
+* Filename: README
+* By: Meghan Kloud (mkloud01) and Olivia Hayward (ohaywa02)
+* Date: 10/26/2020
+* Assignment: Homework 4
+*
+******************************************************************************/
+
+Architecture:
+
+    40image.c:
+        - This file holds our main function and uses the compression,
+        decompression, manipulation, and bitpacking functions to either
+        compress an image into a sequence of 64 bit words or to decompress
+        a sequence of 64 bit words into a ppm image. All of the functions in
+        40image.c deal with executing the instructions given in the command
+        line. This includes reading the given file depending on its type,
+        calling either compression or decompression, and manipulating the data
+        in the file in order to pass the proper arguments to the compression
+        and decompression functions. Most of the compression, decompression,
+        bitpacking, and manipulations are handled with outside functions
+        provided by our other files (see below), so 40image just uses those
+        functions in order to get the data in the correct format. The main
+        algorithms that are in this file consist mostly of reading the files
+        and the command line in the correct way.
+
+    compress.c/.h:
+        - This file holds all of our image compression functions. The
+        compression function visible to the client promises to turn a sequence
+        holding a single block in the original image into a bitpacked word.
+        The compression file holds many helper functions in order to accomplish
+        this goal. It handles each step of compression with a different helper
+        function, including converting rgb values to ypp values, converting
+        those ypp values to a, b, c, d, avg pb, and avg pr values, and
+        bitpacking those final values into a single 64 bit word. It also
+        includes structs to help pass information to each of the helper
+        functions. Since all of these functions are used specifically for image
+        compression, they are held within the same file.
+
+    decompress.c/.h:
+        - This file holds all of our image decompression functions. The
+        decompression function visible to the client promises to turn a
+        bitpacked word into a sequence of rgb structs that make up a single
+        block of the decompressed image. The decompression file holds many
+        helper functions in order to accomplish this goal. It handles each step
+        of decompression with a different helper function, including
+        unbitpacking the 64 bit word into a, b, c, d, avg pb, and avg pr
+        values, converting these values into ypp values, and converting the ypp
+        values into rgb values. It also includes structs to help pass
+        information to each of the helper functions. Since all of these
+        functions are used specifically for image decompression, they are held
+        within the same file.
+
+    imgManipulation.c/.h:
+        - This file holds the functions that specifically manipulate file data
+        passed to the program on the command line. This includes transforming
+        the pixel map created using Pnm_ppmread into a uarray2 with blocksize
+        of 2, transforming the uarray2 of blocksize 2 into a sequence holding
+        a sequence of the pixels in each block at each of its indices, and
+        converting this 2D sequence back into a uarray2 of blocksize 2. The
+        file also holds free functions for the memory it allocates and a struct
+        that the client can use to efficiently pass the data that they receive
+        from the manipulations to different functions. The client is given
+        access to this struct because they need to have the ability to
+        manipulate the data inside of it based on the information received from
+        the image file in order to pass it to other functions. All of these
+        functions deal specifically with transforming one representation of
+        the image data into another and manipulating image data within
+        representations which is why they are contained within the same file.
+
+    bitpack.c:
+        - This file holds all of our bitpacking functions. There are three
+        types of functions: fits, new, and get. The fits functions are used
+        as error checking for the new functions to make sure that the
+        information the client wants to bitpack can fit within the specified
+        number of bits. The new functions insert the value to be bitpacked
+        into the given word by using a mask to zero the bits in the word that
+        the client wants to hold the new value and performing shift operations
+        on the value to get it in the correct position for insertion. The get
+        functions use a mask to retrieve the requested value from the given
+        word and then a shift operation is performed to get the value at lsb 0
+        in the new 64 bit word. Since all of these functions deal specifically
+        with bit manipulation, they were put into the same file.
+
+Help received:
+    We received help from the TAs.
+
+Implementation:
+    Everything has been correctly implemented to the best of our knowledge.
+    However, while our decompression program runs correctly, it is quite slow
+    for larger images. We have tried to figure out why it is running so slow
+    and hypothesized that it may be because of the significant amount of memory
+    being allocated and manipulated to produce the decompressed PNM image file
+    when compared with compression. We know that the runtime is not ideal,
+    but since it does not time out even when given larger images, we believe
+    that our implementation of decompression is still a valid solution.
+
+Hours spent:
+    Analyzing: 15 hours
+    Solving: 27.5 hours
