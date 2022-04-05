@@ -1,1 +1,38 @@
+/******************************************************************************
+*
+* Filename: README
+* By: Olivia Hayward (ohaywa02) and Kate Epifanio (kepifa01)
+* Date: 12/5/2020
+* Assignment: Homework 7
+*
+******************************************************************************/
 
+Help received: Discussed with TAs.
+
+Analysis:
+    The most time consuming routine in our final version of the Universal
+    Machine is the function map_segment, as it makes many calls to malloc and
+    free via the functions init_seg and free_seg. These excessive calls to
+    malloc cause memory fragmentation, which results in malloc becoming slower
+    and slower.
+
+    The assembly code for map_segment itself doesn't have many instructions,
+    since the majority of it is function calls. Our function init_mem, which
+    is our most taxing function, has its assembly code is scattered in the
+    assembly instructions. It compares 3 to the value stored in eax. If eax is
+    less than 3, it jumps to an exception, which corresponds to our assert
+    function. It moves the value 24 into edi and then calls malloc to allocate
+    memory for our segment struct. Then it moves the value in ebx to both rdi
+    and to rax + 16. It then shifts the value in rdi 2 bits left and moves the
+    value in rax into r12 to get the final quantity. It finally moves the
+    value 0 into rax and calls malloc to allocate memory for the segment,
+    which is an array of uint32_t instructions. In free_seg, calls the free
+    function, moves the value from register r12 into rdi, then calls free
+    again. In analyzing the assembly code, we did not find a way in which we
+    could make improvements to this time-consuming routine, as it has to go
+    through extensive calculations to calculate the amount of memory it needs 
+    to allocate for our segment struct and segment array.
+
+Hours spent:
+	Analyzing -- 4 hours
+	Solving   -- 10 hours
