@@ -1,1 +1,107 @@
+/******************************************************************************
+*
+* Filename: README
+* By: Olivia Hayward (ohaywa02) and Kate Epifanio (kepifa01)
+* Date: 11/25/2020
+* Assignment: Homework 6
+*
+******************************************************************************/
+Help received: We were helped by a few TAs.
 
+Implementation: Everything has been correctly implemented to the best of our
+                knowledge.
+
+Significant departures: Our implementation is very different from our initial 
+    design. We use um.c as our main driver for the program. Our 
+    um_load_program.c is now responsible for reading and interpreting the .um 
+    files. The um_execute files replaced some of our um_instruction functions, 
+    but we against keeping all of our instruction function in the same file. 
+    Now, um_memory is used for the actual adding and removing of segments and 
+    um_segment is used for the all instructions related to segments.
+
+Architecture:
+    um.c: Main driver for the program. It has access to both um_load_program
+        and um_execute's header files. It opens the .um file and calls the 
+        load_program function and execute_um function.
+    um_load_program.c/.h: This file contains all of the functions for the 
+        initial setup of the UM. It determines the file size and creates new 
+        bitpacked instructions.
+    um_execute.c/.h: This file contains all of our instruction functions 
+        besides those that deal with segments. It also holds our main function 
+        that reads and interprets the codewords.
+    um_memory.c/.h: This file deals with all of the memory for our UM. It 
+        contains all of the segment-related functions and also initializes the
+        memory for the mem_t struct and frees all the memory.
+
+It takes our UM approximately 2.9329 seconds to complete 50
+million instructions. We used the time function on the 
+command line to time our program completing midmark, which 
+is 85,070,522 instructions. It took our program 4.99 seconds 
+to complete that.
+
+Unit tests:
+    build_hello.um: 
+        Tests: Load value, output, halt
+        Process: This loads the characters to spell out 
+            the word "hello" and then outputs them.
+    build_input_test.um:
+        Tests: Input, output
+        Process: This test takes in an input and outputs it.
+    build_mult_test.um:
+        Tests: Load value, output, multiply
+        Process: This loads 5 and 3 into registers r1 
+            and r2. It multiplies them together and then
+            outputs the product.
+    build_div_test.um:
+        Tests: Load value, output, divide
+        Process: This test loads 15 and 3 into r2 and	
+            r3. It divides 15 by 3 and outputs the result.
+    build_nand_test.um:
+        Tests: Load value, nand
+        Process: This test loads 12 and 3 into 
+            registers 1 and 2. It does a bitwise nand on the 
+            two values.
+    build_seg_test.um:
+        Tests: Load value, map segment, unmap segment
+        Process: This loads the values 2 and 4 into 
+            registers 1 and 3. It then maps segment 4 with 1 
+            codeword of space. Then it unmaps that segment.
+    build_cond_mov_test.um:
+        Tests: Load value, conditional move, output
+        Process: This test loads the values 1, 2, 
+            and 0 into registers 1, 2, and 3. It then calls 
+            the conditional move instruction. Since rc is 
+            equal to 0, nothing should change. It prints out 
+            register 1 which should still contain the value 
+            1. Then it changes the value of rc to 3. It 
+            calls the conditional move instruction again. 
+            Since it is not equal to 0, it changes the value 
+            of r1 to 2 and outputs it.
+    build_cond_mov_test2.um:
+        Tests: Load value, conditional move, output
+        Process: This test loads the values 1, 2, 
+            and 3 into registers 1, 2, and 3. It then calls 
+            the conditional move instruction. Since it is not equal to 0, it
+            changes the value of r1 to 2 and outputs it.
+    build_segment_test.um:
+        Tests: Load value, map segment, segmented store, 
+            segmented load, output
+        Process: It loads the values 2, 4, and 1 
+            into registers 1, 2, and 3. It then maps segment 
+            4 with room for 1 codeword. It then loads the 
+            value 0 into register 1 and the value 3 into 
+            register 3. It then calls the segmented store 
+            instruction and sets the value at segment 4 
+            offset 0 to 3. It then loads this same value 
+            from segment 4 offset 0 into r3 and outputs it.
+    build_loadp_test.um:
+        Tests: Load value, load program
+        Process: This test loads the values 0, 1, 
+            and 6 into registers 1, 2, and 3. It then loads 
+            segment 0 into segment 0 and points at segment 0 
+            offset 1.
+
+Hours spent:
+    Analyzing - 4 hours
+    Preparing - 3 hours
+    Solving - 25 hours
