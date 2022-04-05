@@ -1,0 +1,171 @@
+# Calling Convention
+# r0 is 0
+# r1 is the return-address and result register
+# r2 is the stack pointer
+# r3, r4 are nonvolatiles
+# r5 is a volatile register
+# r6, r7 are temps
+
+
+.section init
+    .zero r0
+    .temps r6, r7
+    r0 := 0
+    jumptable:
+        .space 256
+
+    # initialize jumptable and set all values to "input_error"
+    # we have to implement input_error (see spec)
+
+# section init
+    # set all values in jump table digits
+    # ex. m[r0][jumptable + '0'] := number
+    # do this through 9
+
+# section text?
+    # this is where we do the input of number logic (move the number section
+    # here)
+    # may also need to clean up stack (unsure)
+
+# have a section for each function
+    # init
+        # set m[jmptable + 'character that makes the command'] := name of
+        # command's section
+    # text
+        # the logic of the function
+
+# section for main
+
+.section jumptable
+        if (r6 <= 9 && r6 >= -9) goto number
+
+        if (r6 == "\n") goto newline
+
+        if (r6 == " ") goto space
+
+        if (r6 == "+") goto add
+
+        if (r6 == "-") goto sub
+
+        if (r6 == "*") goto mult
+
+        if (r6 == "/") goto div
+
+        if (r6 == "|") goto or
+
+        if (r6 == "&") goto and
+
+        if (r6 == "c") goto changesign
+
+        if (r6 == "~") goto neg
+
+        if (r6 == "s") goto swap
+
+        if (r6 == "d") goto dup
+
+        if (r6 == "p") goto pop
+
+        if (r6 == "z") goto zerostack
+
+    number:
+        if (r3 := 1) goto multnums
+        push r6 on stack r3 #entering
+        r3 := 1
+        goto input
+    newline:
+        if (r3 > 2) goto printd
+
+        printd r3 #case multiple things on stack
+        goto input
+    space:
+        r3 := 0
+        if true goto input #waiting again
+    add:
+        pop r7 off stack r3
+        pop r6 off stack r3
+        r6 := r6 + r7
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    sub:
+        pop r6 off stack r3
+        pop r7 off stack r3
+        loadval rt,0
+        nand rt,rt,rt
+        r6 := r6 * rt
+        r6 := r7 + r6
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    mul:
+        pop r7 off stack r3
+        pop r6 off stack r3
+        r6 := r6 * r7
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    div:
+        pop r7 off stack r3
+        pop r6 off stack r3
+        r6 := r6 / r7
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    or:
+        pop r7 off stack r3
+        pop r6 off stack r3
+        r6 := r6 | r7
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    and:
+        pop r7 off stack r3
+        pop r6 off stack r3
+        r6 := r6 & r7
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    changesign:
+        pop r6 off stack r3
+        r6 =: ~r6
+        r6 =: r6 + 1
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    neg:
+        pop r6 off stack r3
+        r6 =: ~r6
+        push r3 on stack r3
+        push r6 on stack r3
+        goto input
+    swap:
+        pop r6 off stack r3
+        pop r7 off stack r3
+        push r3 on stack r3     # multiple things on stack?
+        push r6 on stack r3
+        push r7 on stack r3
+        goto input
+    dup:
+        pop r6 off stack r3
+        r7 := r6
+        push r6 on stack r3
+        push r7 on stack r3
+        goto input
+    pop:
+        pop stack r3
+        goto input
+    zerostack:
+        pop r6 off stack r3
+        if (r3 != 0) goto zerostack
+        goto input
+    printstack:
+        pop r7 off stack r3
+        if (r3 > 1) goto printstack
+        goto input
+    multnums:
+        pop r7 off stack r3
+        r6 := r6 * 10
+        r6 := r6 + r7
+        push r6 on stack r3
+        r3 := 1
+        goto input

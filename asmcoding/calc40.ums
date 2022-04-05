@@ -1,0 +1,716 @@
+# Calling Convention
+# r0 is 0
+# r1 is the return-address and result register
+# r2 is the stack pointer
+# r3 is the valstack
+# r4, r5 are nonvolatiles
+# r6, r7 are temps
+.section init
+    .zero r0
+    .temps r6, r7
+    jumptable:
+        .space 256
+
+    # init_table: initiates the jumptable and calls init_table_loop
+
+    init_table:
+        push r1 on stack r2
+        r5 := jumptable
+        r4 := r5 + 256
+        goto init_table_loop
+
+    # init_table_loop: loops through the jumptable and sets
+    #   all values to input_error
+
+    init_table_loop:
+        r5 := r5 + 1        
+        m[r0][r5] := input_error
+        if (r4 >s r5) goto init_table_loop using r1
+
+#################################################################
+# number function: stores the inputted digit on the value stack
+#      and calls either entering or waiting based on the state
+# 
+# input
+#     call stack: val stack, return address to call main
+#      val stack: state
+#           note: r4 = input, r5 = jumplocation, r3 = val stack
+# output
+#     call stack: val stack, return address to callmain, return address to
+#                 main
+#      val stack: first digit of input, state
+#           note: r5 = entering or waiting, r3 = val stack
+#################################################################
+.section init 
+    init_num_table:
+        m[r0][jumptable + '0'] := number
+        m[r0][jumptable + '1'] := number
+        m[r0][jumptable + '2'] := number
+        m[r0][jumptable + '3'] := number
+        m[r0][jumptable + '4'] := number
+        m[r0][jumptable + '5'] := number
+        m[r0][jumptable + '6'] := number
+        m[r0][jumptable + '7'] := number
+        m[r0][jumptable + '8'] := number
+        m[r0][jumptable + '9'] := number
+.section text
+    number:
+        pop r5 off stack r3 #entering or waiting state = r5   
+        r4 := r4 - 48       #convert to decimal
+        push r4 on stack r3 #input
+        if (r5 == 1) goto entering using r1
+        r5 := 1
+        push r5 on stack r3 #setting entering state
+        goto waiting
+
+#################################################################
+# space function: resets the state to waiting and goes back to the
+#       waiting function
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: value(whole number), state
+#           note: r4 = input, r5 = jumplocation, r3 = val stack
+# output
+#     call stack: val stack, return address to main
+#      val stack: value, state
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + ' '] := space
+.section text
+    space: 
+        pop r5 off stack r3 #get state
+        r5 := 0 #set to waiting
+        push r5 on stack r3 #push to val stack
+        goto waiting #waiting again
+
+#################################################################
+# newline function: loops through the value stack to get each of the values
+#       to be printed. It then calls newline_loop to push the value onto
+#       the call stack and calls printd. It then increments the counter, which
+#       is counting the number of values left on the value stack. 
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: value(s), state
+#           note: r4 = input, r5 = jumplocation, r3 = val stack
+# output
+#     call stack: val stack, return address to main, counter
+#      val stack: value(s)
+#           note: r4 = input, r5 = value
+#################################################################
+.section init 
+    m[r0][jumptable + '\n'] := newline
+.section text #val stack = r3
+    newline:
+        pop stack r3 #pops state off value stack
+
+        push r1 on stack r2
+        push r4 on stack r2
+        r4 := endvalstack - r3
+        if (r4 == r0) goto newline_noinput using r1
+        pop r4 off stack r2
+        pop r1 off stack r2
+
+        r1 := m[r0][r3]
+        
+        r4 := r3 #saves address of value stack in r3
+        goto newline_loop
+
+    # newline_loop: grabs the value to print and calls printd, then increases
+    #   the counter
+    newline_loop:
+        if (r4 == endvalstack) goto post_print using r1
+        r5 := m[r0][r4] #value
+        push r4 on stack r2
+        push r0 on stack r2 #counter
+        goto printd linking r1
+        r4 := r4 + 1 #increase address to point to next value   
+        goto newline_loop
+
+    # post_print: resets the value stack after printing
+    post_print:
+        pop stack r2
+        r3 := m[r0][r2]
+        pop stack r3
+        r4 := m[r0][r3]
+        push r0 on stack r3
+        goto waiting
+
+    # newline_noinput: if no input is entered, grab the value & return address
+    #   off the call stack and push the state on the value stack
+    newline_noinput:
+        pop r4 off stack r2
+        pop r1 off stack r2
+        push r0 on stack r3
+        goto waiting
+
+
+
+#################################################################
+# add function: checks that there are enough values on the stack, then adds the
+#   previous 2 values on the stack together
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = val stack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + '+'] := add
+.section text
+    add:
+        push r1 on stack r2
+        goto check2 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        pop r4 off stack r3 #value 2
+        r5 := r4 + r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# subtract function: checks that there are enough values on the stack, then
+#      subtracts the most recent value from the second value.
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = val stack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + '-'] := sub
+.section text
+    sub:
+        push r1 on stack r2
+        goto check2 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        pop r4 off stack r3 #value 2
+        r5 := r4 - r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# multiply function: checks that there are enough values on the stack, then
+#       multiplies the 2 most recents numbers on the stack together
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + '*'] := mul
+.section text
+    mul:
+        push r1 on stack r2
+        goto check2 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        pop r4 off stack r3 #value 2
+        r5 := r4 * r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# division function: checks that there are enough values on the stack, then
+#       divides the second value on the stack by the first. If there are any
+#       special cases, it calls the appropriate function
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + '/'] := div
+.section text
+    div:
+        push r1 on stack r2
+        goto check2 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        pop r4 off stack r3 #value 2
+        push r1 on stack r2
+
+        if (r5 == r0) goto divzero using r1
+        if (r5 <s r0) goto first_negative using r1
+        if (r4 <s r0) goto second_negative using r1
+
+        r5 := r4 / r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        pop r1 off stack r2
+        goto waiting
+
+    # division by zero
+    divzero:
+        output "Division by zero\n"
+        push r4 on stack r3
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        pop r1 off stack r2
+        goto waiting
+
+    # the divisor is negative
+    first_negative:
+        if (r4 <s 0) goto bothnegative using r1
+        r5 := -r5
+        r5 := r4 / r5
+        r5 := -r5
+        push r5 on stack r3
+        push r0 on stack r3
+        pop r1 off stack r2
+        goto waiting
+
+    # the number to be divided is negative
+    second_negative:
+        r4 := -r4
+        r4 := r5 / r4
+        r4 := -r4
+        push r4 on stack r3
+        push r0 on stack r3
+        pop r1 off stack r2
+        goto waiting
+
+    # both numbers are negative
+    bothnegative:
+        r4 := -r4
+        r5 := -r5
+        r5 := r4 / r5
+        push r5 on stack r3
+        push r0 on stack r3
+        pop r1 off stack r2
+        goto waiting
+
+#################################################################
+# or function: checks that there are enough values on the stack, then does a
+#       bitwise or on the two most recent values on the stack
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + '|'] := or
+.section text
+    or:
+        push r1 on stack r2
+        goto check2 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        pop r4 off stack r3 #value 2
+        r5 := r4 | r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# and function: checks that there are enoguh values on the stack, then does a 
+#       bitwise and on the two most recent values on the stack
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + '&'] := and
+.section text
+    and:
+        push r1 on stack r2
+        goto check2 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        pop r4 off stack r3 #value 2
+        r5 := r4 & r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# change sign function: checks that there are enough values on the stack, then
+#       changes the sign of the number from positive to negative
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + 'c'] := changesign
+.section text
+    changesign:
+        push r1 on stack r2
+        goto check1 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        r5 := -r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# swap function: checks that there are enough values on the stack, then swaps
+#       the first value on the stack with the second value
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + 's'] := swap
+.section text
+    swap:
+        push r1 on stack r2
+        goto check2 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        pop r4 off stack r3 #value 2
+        push r5 on stack r3
+        push r4 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# negation function: checks that there are enough values on the stack, then
+#       replaces the first value on the stack with its opposite
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + '~'] := neg
+.section text
+    neg:
+        push r1 on stack r2
+        goto check1 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        r5 := ~r5
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# duplicate function: checks that there are enough values on the stack, then
+#       pushes the value on the top of the stack to the value stack again
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + 'd'] := dup
+.section text
+    dup:
+        push r1 on stack r2
+        goto check1 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop r5 off stack r3 #value 1
+        push r5 on stack r3
+        push r5 on stack r3
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# popoff function: checks that there are enough values on the stack, then it 
+#       pops the top value off of the stack
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation, r3 = valstack
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + 'p'] := popoff
+.section text
+    popoff:
+        push r1 on stack r2
+        goto check1 linking r1
+        pop r1 off stack r2
+        r3 := m[r0][r2 + 1]
+        pop stack r3 #waiting state
+        pop stack r3 #value 
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+#################################################################
+# zerostack function: finds out how many values are on the value stack, then
+#       loops through to pop them all off
+# 
+# input
+#     call stack: val stack, return address to main
+#      val stack: val1, val2, state
+#           note: r4 = input, r5 = jumplocation
+# output
+#     call stack: val stack, return address to main
+#      val stack: result, waiting
+#           note: r4 = input, r5 = jumplocation
+#################################################################
+.section init 
+    m[r0][jumptable + 'z'] := zerostack
+.section text
+    zerostack:
+        push r1 on stack r2
+        push r4 on stack r2
+        pop stack r3 #waiting state
+        r4 := endvalstack - r3
+        goto zerostack_loop linking r1
+        pop r4 off stack r2
+        pop r1 off stack r2
+        push r0 on stack r3 #indicates waiting
+        goto waiting
+
+    # zerostack_loop: pops the values off the stack until the counter hits 0    
+    zerostack_loop:
+        if (r4 == 0) goto r1
+        pop stack r3
+        r4 := r4 - 1
+        goto zerostack_loop
+
+
+
+.section text
+    ############################################################################
+    # entering: grabs the most recent value off the value stack and multiplies
+    #       it by 10. Then it adds that number to the digit currently held in r4
+    #       and stores that result onto the value stack, then goes back to 
+    #       waiting.
+    # 
+    # input
+    #     call stack: val stack, return address to callmain, return address to
+    #                 main
+    #      val stack: second val, last digit of input
+    #           note: r5 = entering or waiting, r3 = val stack
+    # output
+    #     call stack: val stack, return address to callmain, return address to
+    #                 main
+    #      val stack: new value, state
+    #           note: r4 = first digit input, r1 = entering
+    ############################################################################
+    entering:
+        pop r4 off stack r3 # r4 = last digit input
+        pop r1 off stack r3 # r1 = previous value
+        r1 := r1 * 10
+        r1 := r1 + r4
+        push r1 on stack r3
+        r5 := 1 # entering state
+        push r5 on stack r3
+        goto waiting
+
+    ############################################################################
+    # waiting: pops the old value stack off of the call stack and pushes the 
+    #       updated valuestack onto the call stack. Then it grabs the next
+    #       character input and goes to waiting_with_character
+    # 
+    # input
+    #     call stack: old val stack, return address to main
+    #      val stack: state
+    #           note: r3 = new value stack
+    # output
+    #     call stack: val stack, return address to main
+    #      val stack: state
+    #           note: r4 = input
+    ############################################################################
+    waiting:
+        pop r1 off stack r2     # add to main
+        pop stack r2    #old valuestack
+        push r3 on stack r2 #push value stack on call stack (m[0][r2 + 3])
+        push r1 on stack r2
+        r4 := input()
+        # r0 := ~r0
+        # if (r4 == r0) goto exit_prog using r5
+        # r0 := 0
+        goto waiting_with_character
+    
+    
+    ############################################################################
+    # waiting with character: checks for EOF, then goes to the character's spot
+    #       in the jumptable. Then it pops off the old value stack and pushes
+    #       the updated one again and goes back to waiting.
+    # input
+    #     call stack: old val stack, return address to main
+    #      val stack: state
+    #           note: r4 = input, r3 = updated valstack
+    # output
+    #     call stack: val stack, return address to main
+    #      val stack: state
+    #           note: r4 = input, r5 = jumplocation
+    ############################################################################
+    waiting_with_character:
+        r5:= ~r4
+        if (r5 == 0) goto exit_prog using r1
+        r5 := jumptable + r4
+        r5 := m[r0][r5] #jump
+        goto r5 linking r1
+        pop r1 off stack r2 #ret add to main
+        pop stack r2 # old val stack
+        push r3 on stack r2 # new val stack
+        push r1 on stack r2
+        goto waiting
+    
+    # input_error: if the inputted character is not a known operand or number
+    #       it prints out an error message and goes back to waiting
+    input_error:
+        output "Unknown character '"
+        output r4
+        output "'\n"
+        goto waiting
+
+    ############################################################################
+    # main: sets r0 to 0 and sets r3 equal to the value stack. Goes to waiting.
+    # 
+    # input
+    #     call stack: empty
+    #      val stack: empty
+    #           note: 
+    # output
+    #     call stack: val stack, return address to main
+    #      val stack: state
+    #           note: 
+    ############################################################################
+    main:
+        r0 := 0
+        r3 := endvalstack
+        push r3 on stack r2
+        push r1 on stack r2 #return address
+        push r0 on stack r3 
+        goto waiting linking r1
+        pop r1 off stack r2
+        goto r1
+
+    # check1: checks if there is at least one value on the value stack
+    check1: 
+        push r1 on stack r2
+        push r4 on stack r2
+        push r5 on stack r2
+        r4 := endvalstack - r3
+        if (r4 <s 2) goto arg_error1 using r5
+        pop r5 off stack r2
+        pop r4 off stack r2
+        pop r1 off stack r2
+        goto r1
+
+    # check2: checks if there is at least 2 values on the value stack
+    check2:
+        push r1 on stack r2
+        push r4 on stack r2
+        push r5 on stack r2
+        r4 := endvalstack - r3
+        if (r4 <s 3) goto arg_error2 using r5
+        pop r5 off stack r2
+        pop r4 off stack r2
+        pop r1 off stack r2
+        goto r1
+
+    # arg_error1: prints error message if there isn't 1 value on the value
+    #       stack and returns to waiting
+    arg_error1: #prints error if no values on val stack and returns to waiting
+        output "Stack underflow---expected at least 1 element\n"
+        pop r5 off stack r2
+        pop r4 off stack r2
+        pop r1 off stack r2
+        goto waiting
+
+    # arg_error2: prints error message if there aren't 2 values on the value
+    #       stack and returns to waiting
+    arg_error2:
+        output "Stack underflow---expected at least 2 elements\n"
+        pop r5 off stack r2
+        pop r4 off stack r2
+        pop r1 off stack r2
+        goto waiting
+
+    # exit_prog: clears the stacks and exits the program
+    exit_prog:
+        r3 := m[r0][r2]
+        r4 := endvalstack - r3 #valstack counter
+        goto clear_valstack linking r1
+        r4 := endstack - r2 #valstack counter
+        goto clear_callstack linking r1
+        halt
+
+    # clear_valstack: clears the value stack in a loop
+    clear_valstack:
+        if (r4 == 0) goto r1
+        pop stack r3
+
+    # clear_callstack: clears the call stack in a loop
+    clear_callstack:
+        if (r4 == 0) goto r1
+        pop stack r2
+        halt
