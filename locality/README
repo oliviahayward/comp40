@@ -1,0 +1,209 @@
+/******************************************************************************
+*
+* Filename: README
+* By: Meghan Kloud (mkloud01) and Olivia Hayward (ohaywa02)
+* Date: 10/12/2020
+* Assignment: Homework 3
+*
+******************************************************************************/
+
+
+//////////////////////////////////////////////////////////////////////////////
+                Solution Architecture and Acknowledgements
+//////////////////////////////////////////////////////////////////////////////
+
+
+Solution Architecture:
+
+    Our uarray2 is structured as one continuous uarray that organizes
+    information by rows. Our UArray_T struct keeps track of the width and
+    height of the 2D array to be stored and stores the 2D array in a singular,
+    continuous uarray within that struct. As information is read into our
+    uarray2, elements are placed into the uarray in row order. For example,
+    if a 2D image was to be stored in our uarray2, the first row of pixels
+    would be the first width elements of the uarray. The second row of pixels
+    would start at the index immediately after the last element of the first
+    row. This continues for all of the rows of pixels in the image file. In
+    order to access the elements of our Uarray2 based on a given index in a
+    2D array, we use the 2D array index given and perform index math to find
+    that element in our single uarray.
+
+    Our uarray2b is structured as one continuous uarray that organizes
+    information by block. Our UArray2b_T struct keeps track of the width,
+    height, and blocksize of the 2D array to be stored and stores the 2D array
+    in a singular, continuous uarray within that struct. The struct also keeps
+    track of the width_buffer and height_buffer, which store the amount of
+    extra space required for each row/column to account for a blocksize that
+    does not divide evenly into the width and height of the given 2D array
+    data, as well as the length of the resulting uarray created (accounting for
+    extra space). As information is read into our uarray2b, elements are placed
+    into the uarray in block order. For example, if a 2D image was to be stored
+    in our uarray2b and there is a given blocksize for the data, then the data
+    will be placed into the uarray in block order, with the first
+    blocksize x blocksize elements of the uarray corresponding to the first
+    block of the image. Uninitialized spaces are left in the array to account
+    for incomplete blocks.
+
+    Our ppmtrans.c rotations are implemented by using the corresponding mapping
+    function that the user specifies to read the 2D array and then putting each
+    element of the original 2D array into a new 2D array at the correct
+    resulting index. See function contracts for more details.
+
+Help Received:
+
+    We received help from multiple TAs with out ppmtrans.c program and trying
+    to understand how the A2Methods interface worked. All of them were super
+    helpful and aided in our understanding. I also talked to a classmate
+    outside of my partner about some of the concepts surrounding rotations and
+    that aided in my understanding of the task.
+
+Implementations:
+
+    To the best of our knowledge, all of the programs submitted have been
+    correctly implemented.
+
+Hours taken to complete the project: 23 hours
+
+
+//////////////////////////////////////////////////////////////////////////////
+                         Part E: Measured Performance
+//////////////////////////////////////////////////////////////////////////////
+
+
+Computer Used
+    Name: Intel(R) Xeon(R) Silver 4214Y
+    Model: 85
+    CPU Type:
+        Vendor ID: GenuineIntel
+        CPU Family: 6
+        CPU Core: 6
+        OP Mode: 32-bit and 64-bit
+        Architecture: x86_64
+    Clock Rate: 2194.844
+
+
+****************************** Image 1: mobo.ppm ******************************
+
+Image Width: 8160 pixels
+Image Height: 6120 pixels
+
++---------------+----------------+----------------+---------------------------+
+| Rotation Type | CPU Total Time | Time Per Pixel | Instructions Per Pixel    |
++---------------+----------------+----------------+---------------------------+
+| Row Major     | 4241817960     | 84.939646      | About 85 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Row Major     | 4889043712     | 97.899921      | About 98 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Column Major  | 3480472719     | 69.694203      | About 70 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Column Major  | 1961411389     | 39.275987      | About 39 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Block Major   | 4398236234     | 88.071820      | About 88 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Block Major   | 4170326691     | 83.508080      | About 84 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+
+**************************** Image 2: flowers.ppm *****************************
+
+Image Width: 816 pixels
+Image Height: 458 pixels
+
++---------------+----------------+----------------+---------------------------+
+| Rotation Type | CPU Total Time | Time Per Pixel | Instructions Per Pixel    |
++---------------+----------------+----------------+---------------------------+
+| Row Major     | 17991219       | 48.139874      | About 48 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Row Major     | 17900868       | 47.898118      | About 48 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Column Major  | 25689043       | 68.737271      | About 69 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Column Major  | 14734345       | 39.425317      | About 39 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Block Major   | 31860795       | 85.251292      | About 85 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Block Major   | 30380158       | 81.289489      | About 81 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+
+
+**************************** Image 3: animals.ppm *****************************
+
+Image Width: 400 pixels
+Image Height: 300 pixels
+
++---------------+----------------+----------------+---------------------------+
+| Rotation Type | CPU Total Time | Time Per Pixel | Instructions Per Pixel    |
++---------------+----------------+----------------+---------------------------+
+| Row Major     | 5020498        | 41.837483      | About 42 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Row Major     | 5336190        | 44.468250      | About 44 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Column Major  | 4622760        | 38.523000      | About 39 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Column Major  | 4682842        | 39.023683      | About 39 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Block Major   | 10147427       | 84.561892      | About 85 instructions     |
+| Rotate 90     | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+| Block Major   | 10049029       | 83.741908      | About 84 instructions     |
+| Rotate 180    | nanoseconds    | nanoseconds    |                           |
++---------------+----------------+----------------+---------------------------+
+
+Both of the rotations that use block traversal have similar CPU times and
+times per pixel to rotate. This makes sense in terms of locality because when
+you rotate the image by reading the blocks, you are essentially reading a block
+from the original image and copying those pixel into a block of the resulting
+image. This is true for both rotations, so both rotations should take around
+the same time. This time consistency is true across image sizes as well. As the
+image gets bigger, the time it takes for a rotation using block traversal
+stays relatively constant because block sizes stay relatively consistent. In
+most cases, rotations done with block traversal are slower than rotations done
+with row or column traversal. This makes sense because for our implementation
+of uarray2b, we do vastly more index math in our at function than in our
+uarray2 at function, so getting each element will take longer.
+
+Both of the rotations done with row traversal have similar CPU times and times
+per pixel to rotate, except for in mobo.ppm where the rotate 180 took longer
+than the rotate 90. For mobo.ppm, we expected rotate 180 to be faster than
+rotate 90, since for rotating 180 we would be reading from rows in the original
+array and copying to rows in the resulting array, which capitalizes on locality
+since rows are stored near each other in memory. As the image becomes larger,
+there are more instructions per pixel because the rows hold more elements as
+the image gets bigger. Both of the rotations using row traversal took less
+time than the rotations using block traversal, which makes sense because there
+is less index math used in the uarray2 at function, so it takes less time to
+get an element from the original array. This is true for all images except for
+mobo.ppm, as rotate 180 using row traversal took the longest out of all of the
+rotations. This was confusing to us because we expected the row major traversal
+to be faster than block traversal.
+
+The rotate 90 done with column traversal takes longer than the rotate 180 with
+column traversal except for in animals.ppm. This result confused us because we
+expected rotate 180 with column traversal to take more time than rotate 90
+because we would be reading from columns in the original array and writing to
+columns in the resulting array, which has worse spacial locality since columns
+are not stored next to each other in memory. As the image size gets larger, the
+rotate 90 with column traversal tends to take longer, but the rotate 180 done
+with column traversal tends to take the same amount of time. This was
+unexpected again because we expected rotate 180 using column traversal to be
+slow because of spacial locality. Rotations using column traversal tend to take
+the least amount of time out of all of the traversals, except in the case of
+flowers.ppm. This result was confusing to us because we expected the rotations
+done using column traversal to take the longest because in our 2D array
+representation, column have the worst spacial locality, as rows are stored next
+to each other in memory.
